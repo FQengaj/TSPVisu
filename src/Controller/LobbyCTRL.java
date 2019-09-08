@@ -144,6 +144,15 @@ public class LobbyCTRL {
     }
 
     @FXML
+    private void perfectMatch(){
+        this.graph.setAdjazenzmatrix(Util.perfectMatch(graph));
+        this.graph.isDirected = false;
+        map.onDraw();
+        updateTotalCost();
+        Util.printGraph(graph);
+    }
+
+    @FXML
     private void eulerCirc(){
         if(!graph.isDirected){
             this.graph.setAdjazenzmatrix(Util.EulerCirc(graph));

@@ -17,6 +17,18 @@ public class Graph {
     private LinkedList<City> vertices;
     public boolean isDirected = true;
 
+
+    public Graph(){
+        Adj = new LinkedList<>();
+        vertices = new LinkedList<>();
+    }
+
+    public Graph(LinkedList<City> vertices, LinkedList<LinkedList<Double>> adj){
+        this.vertices = vertices;
+        this.Adj = adj;
+        this.isDirected = false;
+    }
+
     public Graph(LinkedList<City> vertices) {
         this.vertices = vertices;
         this.Adj = new LinkedList<>();
@@ -34,11 +46,6 @@ public class Graph {
             this.Adj.add(newEntry);
         }
 
-    }
-
-    public Graph(){
-        Adj = new LinkedList<>();
-        vertices = new LinkedList<>();
     }
 
     public void addVertex(City c){
@@ -92,5 +99,9 @@ public class Graph {
     public void clear() {
         this.vertices.clear();
         this.Adj.clear();
+    }
+
+    public City getCity(int i) {
+        return vertices.get(i);
     }
 }

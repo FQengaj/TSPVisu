@@ -9,6 +9,79 @@ import java.util.Stack;
 
 public class Util {
 
+
+    public static LinkedList<LinkedList<Double>> perfectMatch(Graph graph){
+        LinkedList<LinkedList<Double>> perfectMatchAdj = copyGraphAdj(graph);
+
+        LinkedList<Integer> vertexWithOddDeg = new LinkedList<>();
+
+        Graph matching_graph = new Graph();
+        // select all Vertecies with Odd Degre
+        // Opt: no need for adj do all with perfectMatchAdj
+        for (int i = 0; i < perfectMatchAdj.size(); i++) {
+            int deg = 0;
+            for (int j = 0; j < perfectMatchAdj.get(i).size(); j++) {
+                if (perfectMatchAdj.get(i).get(j) != 0) deg++;
+            }
+
+            if (deg%2 != 0) {
+                vertexWithOddDeg.add(i);
+                matching_graph.addVertex(graph.getCity(i));
+            }
+        }
+        LinkedList<LinkedList<Double>> matchingAdj = matching_graph.getAdjazenzmatrix();
+
+        // same Graph so no join will be needed.
+        // Perfect matching..
+
+
+        LinkedList<LinkedList<Double>> matched = EmtyAdjazenzmatrix(vertexWithOddDeg.size());
+
+        for (int i = 0; i < vertexWithOddDeg.size()-1; i+=2) {
+            matched.get(i).set(i+1, 1.0);
+            matched.get(i+1).set(i, 1.0);
+        }
+
+        printGraph(matched);
+
+        // Add Edges from Perfect Matching
+        for(int i = 0; i < vertexWithOddDeg.size(); i++){
+            for (int j = 0; j < i; j++) {
+                double newVal = matchingAdj.get(i).get(j);
+                if (newVal!= 0){
+                    int xindex = vertexWithOddDeg.get(i),
+                        yindex = vertexWithOddDeg.get(j);
+
+                    // undirected
+                    perfectMatchAdj.get(i).set(j, newVal);
+                    perfectMatchAdj.get(j).set(i, newVal);
+                }
+            }
+        }
+
+        // new graph with Eulercirc.
+        //perfectMatchAdj = EulerCirc(new Graph(graph.getVertices(), perfectMatchAdj));
+
+        return perfectMatchAdj;
+    }
+
+    private static LinkedList<LinkedList<Double>> copyGraphAdj(Graph graph) {
+        LinkedList<LinkedList<Double>> result = new LinkedList<>();
+        LinkedList<LinkedList<Double>> source = graph.getAdjazenzmatrix();
+
+        for (int i = 0; i <graph.getSize(); i++) {
+            LinkedList<Double> row = new LinkedList<>();
+            for (int j = 0; j < graph.getSize(); j++) {
+                double currVal = source.get(i).get(j);
+                row.add(currVal);
+            }
+            result.add(row);
+        }
+
+        return result;
+    }
+
+
     public static LinkedList<LinkedList<Double>> PrimsMST(Graph graph){
         LinkedList<LinkedList<Double>> MST = EmtyAdjazenzmatrix(graph.getSize());
 
@@ -160,28 +233,19 @@ public class Util {
         return result;
     }
 
-    private static LinkedList<LinkedList<Double>> EmtyAdjazenzmatrix(int bound){
-        LinkedList<LinkedList<Double>> result = new LinkedList<>();
-
-        //init with 0
-
-        for (int i = 0; i < bound; i++){
-            LinkedList<Double> tmp = new LinkedList<>();
-            for (int j = 0; j < bound; j++) tmp.add(0.0);
-            result.add(tmp);
-        }
-
-        return result;
-    }
-
     public static void printGraph(Graph g){
 
         LinkedList<LinkedList<Double>> adj = g.getAdjazenzmatrix();
 
+        printGraph(adj);
+    }
+
+
+    public static void printGraph(LinkedList<LinkedList<Double>> adj){
         String str = "|\t";
 
-        for(int i=0;i<g.getSize();i++){
-            for(int j=0;j<g.getSize();j++){
+        for(int i=0;i<adj.size();i++){
+            for(int j=0;j<adj.size();j++){
                 str += String.format("%.4f\t" ,  adj.get(i).get(j));
             }
 
@@ -211,4 +275,53 @@ public class Util {
         return result;
     }
 
+
+
+    private static LinkedList<LinkedList<Double>> EmtyAdjazenzmatrix(int bound){
+        LinkedList<LinkedList<Double>> result = new LinkedList<>();
+
+        //init with 0
+
+        for (int i = 0; i < bound; i++){
+            LinkedList<Double> tmp = new LinkedList<>();
+            for (int j = 0; j < bound; j++) tmp.add(0.0);
+            result.add(tmp);
+        }
+
+        return result;
+    }
+
+    //---- on ICE maybe dont need it...
+    /*
+    private static Graph joinGraphs(Graph g1, Graph g2) {
+        LinkedList<City> g1citys = g1.getVertices(),
+                        g2citys = g2.getVertices(),
+                        resultCity  = new LinkedList<>();
+
+        for(City c : g1citys){
+            if(!resultCity.contains(c)){
+                resultCity.add(c);
+            }
+        }
+
+        for(City c : g2citys){
+            if(!resultCity.contains(c)){
+                resultCity.add(c);
+            }
+        }
+
+        LinkedList<LinkedList<Double>> resultAdj = EmtyAdjazenzmatrix(resultCity.size());
+
+        for (int i = 0; i < resultCity.size(); i++) {
+
+
+
+        }
+
+
+        Graph result = new Graph(resultCity, resultAdj);
+
+        return result;
+    }
+    */
 }
