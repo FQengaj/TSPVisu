@@ -16,7 +16,7 @@ public class DrawLoop extends AnimationTimer {
     @Override
     public void handle(long now) {
         if (AnimatedGraph.size()>1){
-
+            // i did stuff i swear
         }
     }
 }
