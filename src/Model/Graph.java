@@ -13,6 +13,8 @@ import java.util.LinkedList;
 */
 public class Graph {
 
+    private LinkedList<GraphState> states = new LinkedList<GraphState>();
+    private int statePointer = 0;
     private LinkedList<LinkedList<Double>> Adj;
     private LinkedList<City> vertices;
     public boolean isDirected = true;
@@ -99,9 +101,24 @@ public class Graph {
     public void clear() {
         this.vertices.clear();
         this.Adj.clear();
+        this.states.clear();
+        statePointer = 0;
     }
 
     public City getCity(int i) {
         return vertices.get(i);
+    }
+
+    public void addstate(GraphState graphState) {
+        this.states.add(graphState);
+    }
+
+    public GraphState getNextState() {
+        if (states.size() == 0 || statePointer == states.size()){
+            return null;
+        }
+        GraphState result = states.get(statePointer);
+        statePointer++;
+        return result;
     }
 }

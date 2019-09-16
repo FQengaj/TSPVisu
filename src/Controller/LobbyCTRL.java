@@ -3,6 +3,7 @@ package Controller;
 import Controller.Utils.Util;
 import Model.City;
 import Model.Graph;
+import Model.GraphState;
 import View.MapPane;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
@@ -12,21 +13,17 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 
+import java.util.LinkedList;
 import java.util.Random;
 
 public class LobbyCTRL {
-    /*
-    * todo
-    *  1. Git upload
-    * */
-
-
     @FXML private BorderPane BaseLayout;
     @FXML private ScrollPane topPane;
     @FXML private TextField txt;
     @FXML private Label lbl;
     @FXML private Label lbllw; // line width info
     @FXML private Label lblTC;
+    @FXML private Label lblProcess; // aktueller Prozess in der Navigation
     @FXML private Button btnar; // add random point
     @FXML private Button btnCls; // clear graph
     @FXML private Button btnhl; // hide lines
@@ -37,12 +34,14 @@ public class LobbyCTRL {
     private int pointCounter = 0;
     private MapPane map;
     private Graph graph;
+    private DrawLoop drawloop;
 
 
     @FXML
     public void initialize(){
         graph = new Graph();
         this.map = new MapPane(this.graph);
+        drawloop = new DrawLoop(this.map);
         Pane p = new Pane();
         p.getChildren().add(map);
 
@@ -120,6 +119,7 @@ public class LobbyCTRL {
         lbl.setText("0");
         map.onDraw();
         updateTotalCost();
+        lblProcess.setText("Cleared:");
     }
 
     @FXML
@@ -156,7 +156,9 @@ public class LobbyCTRL {
     private void eulerCirc(){
         if(!graph.isDirected){
             this.graph.setAdjazenzmatrix(Util.EulerCirc(graph));
-            map.onDraw();
+
+
+            //map.onDraw();
             updateTotalCost();
             Util.printGraph(graph);
         }
@@ -198,4 +200,21 @@ public class LobbyCTRL {
         this.lblTC.setText(TC);
     }
 
+    public void aniStep(ActionEvent actionEvent) {
+        GraphState currstate = this.graph.getNextState();
+        if (currstate != null){
+            this.lblProcess.setText(currstate.process+":");
+            if(currstate.transition){
+                this.map.onDraw(currstate.snapshot);
+            }else if (currstate.line){
+                LinkedList<City> sel = currstate.selection;
+                for (int i = 0; i < sel.size()-1; i++) {
+                    this.map.highlightLine(sel.get(i), sel.get(i+1));
+                }
+            }else{
+                this.map.highlightPoint(currstate.selection);
+            }
+
+        }
+    }
 }

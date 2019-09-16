@@ -21,18 +21,63 @@ public class MapPane extends Canvas {
         this.graph = graph;
     }
 
+    public Graph getGraph() {
+        return graph;
+    }
+
     // make it so that only new Linkes
     public void onDraw(){
+        onDraw(this.graph);
+    }
+
+    public void toogleLines(){
+        drawLines = !drawLines;
+        onDraw();
+    }
+
+
+    public void highlightLine(City c1, City c2){
+
+        GraphicsContext gc = this.getGraphicsContext2D();
+
+        gc.setStroke(Color.BLUE);
+        gc.setLineWidth(6);
+
+        double W = this.getWidth();
+        double H  = this.getHeight();
+
+        double c1x = c1.x*W;
+        double c1y = c1.y*H;
+
+        double c2x = c2.x*W;
+        double c2y = c2.y*H;
+
+        gc.strokeLine(c1x + (OVALDIAMETER / 2), c1y + (OVALDIAMETER / 2), c2x + (OVALDIAMETER / 2), c2y + (OVALDIAMETER / 2));
+
+    }
+
+    public void highlightPoint(LinkedList<City> c){
+
+        GraphicsContext gc = this.getGraphicsContext2D();
+
+        gc.setFill(Color.YELLOW);
+
+        double W = this.getWidth();
+        double H  = this.getHeight();
+
+        for (City point : c) {
+            gc.fillOval((point.x*W), (point.y*H), OVALDIAMETER, OVALDIAMETER);
+        }
+
+    }
+
+    public void onDraw(Graph graph){
 
         GraphicsContext gc = this.getGraphicsContext2D();
         gc.setFill(Color.WHITE);
         gc.fillRect(0,0,this.getWidth(), this.getHeight());
 
-        gc.setStroke(Color.GRAY);
-        gc.setFill(Color.GRAY);
-
         if (graph.getSize() == 0) return;
-
 
         gc.setFill(Color.RED);
         gc.setStroke(Color.BLACK);
@@ -74,6 +119,8 @@ public class MapPane extends Canvas {
                         if (i == j || adj.get(i).get(j) == 0) {
                             continue;
                         }
+
+
                         gc.strokeLine(c1x+(OVALDIAMETER/2), c1y+(OVALDIAMETER/2), c2x+(OVALDIAMETER/2),c2y+(OVALDIAMETER/2));
                     }
                 }
@@ -84,13 +131,6 @@ public class MapPane extends Canvas {
             gc.fillOval((point.x*W), (point.y*H), OVALDIAMETER, OVALDIAMETER);
         }
 
-
-
-    }
-
-    public void toogleLines(){
-        drawLines = !drawLines;
-        onDraw();
     }
 
     public double getCostofCurrPath() {
