@@ -2,6 +2,7 @@ package View;
 
 import Model.City;
 import Model.Graph;
+import Model.GraphState;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -26,18 +27,23 @@ public class MapPane extends Canvas {
     }
 
     // make it so that only new Linkes
-    public void onDraw(){
+    public void lagacyOnDraw(){
         onDraw(this.graph);
+    }
+
+    // todo:
+    public void onDraw(){
+
     }
 
     public void toogleLines(){
         drawLines = !drawLines;
-        onDraw();
+        lagacyOnDraw();
     }
 
 
     public void highlightLine(City c1, City c2){
-
+        if (!this.drawLines) return;
         GraphicsContext gc = this.getGraphicsContext2D();
 
         gc.setStroke(Color.BLUE);
@@ -133,15 +139,4 @@ public class MapPane extends Canvas {
 
     }
 
-    public double getCostofCurrPath() {
-        double result = 0;
-        LinkedList<LinkedList<Double>> adj = graph.getAdjazenzmatrix();
-        for (int i = 0; i < graph.getSize();i++){
-            for (int j = i+1; j < graph.getSize(); j++){
-                result += adj.get(i).get(j);
-            }
-        }
-
-        return result;
-    }
 }

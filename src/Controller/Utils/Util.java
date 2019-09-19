@@ -47,19 +47,20 @@ public class Util {
             matched.get(i).set(i+1, newVal);
             matched.get(i+1).set(i, newVal);
         }
-
         matching_graph.setAdjazenzmatrix(matched);
 
-
+        // print Vertex indices with odd Deg
         System.out.print("[");
         for (int i = 0; i < vertexWithOddDeg.size()-1; i++) {
             int x = vertexWithOddDeg.get(i);
             System.out.print(x+", ");
         }
         System.out.printf("%d]\n", vertexWithOddDeg.getLast());
+
         printGraph(matched);
 
         // Add Edges from Perfect Matching
+        // todo nicht ganz richtig !!
         for(int i = 0; i < vertexWithOddDeg.size(); i++){
             for (int j = 0; j < i; j++) {
                 double newVal = matchingAdj.get(i).get(j);
@@ -73,15 +74,13 @@ public class Util {
                 }
             }
         }
+        printGraph(perfectMatchAdj);
 
         // new graph with Eulercirc.
         //perfectMatchAdj = EulerCirc(new Graph(graph.getVertices(), perfectMatchAdj));
 
         return perfectMatchAdj;
     }
-
-
-    //todo animate den shit vor eulercirc? Nah erst euler gut dann das dann Perfect Match.
     public static LinkedList<LinkedList<Double>> PrimsMST(Graph graph){
         LinkedList<LinkedList<Double>> MST = EmtyAdjazenzmatrix(graph.getSize());
 
@@ -90,14 +89,16 @@ public class Util {
 
         int start = (int)(Math.random()*graph.getSize());
         indexOfVisited.add(start);
-        addPointState(graph, "Prims Minimum Spanning Tree", start);
+        addPointState(graph, "Prims MST", start);
+        //addPointState(graph, "Prims Minimum Spanning Tree", start);
 
         while(indexOfVisited.size() < graph.getSize()){
-            LinkedList<Integer> listOfBest = new LinkedList<>();
+            LinkedList<Integer> listOfBest = new LinkedList<>(),
+                                verticesToDisplay = new LinkedList<>();
             // suche von allen Besuchten Edges den mit dem Geringsten Kosten(dist)
             for (int i = 0; i < indexOfVisited.size(); i++) {
 
-                //nehme eine Spalte aus der Adjazenzmatrix
+                // nehme eine Spalte aus der Adjazenzmatrix
                 int currNodeIndex = indexOfVisited.get(i);
                 LinkedList<Double> weightsFromCurr = graph.getAdjazenzmatrix().get(currNodeIndex);
 
@@ -108,6 +109,7 @@ public class Util {
 
                     if (weight == 0) continue;
                     if (!indexOfVisited.contains(j)){
+                        verticesToDisplay.add(j);
                         if (nextBest == -1) {
                             nextBest = j;
                         }else if (weight < weightsFromCurr.get(nextBest)){
@@ -115,10 +117,13 @@ public class Util {
                         }
                     }
                 }
+                //addPointState(graph, "PrimsMST: Check Neigbors",verticesToDisplay);
                 listOfBest.add(nextBest);
+                //addPointState(graph, "PrimsMST: Selected Best Vertex for this Parent", nextBest);
             }
 
             int indexOfBest = 0;
+            addPointState(graph, "PrimsMST: Select Best of the Best", listOfBest);
             double weightOfBest = graph.getAdjazenzmatrix().get(indexOfVisited.get(indexOfBest)).get(listOfBest.get(indexOfBest));
             for (int i = 1; i < listOfBest.size(); i++){
                 double temp = graph.getAdjazenzmatrix().get(indexOfVisited.get(i)).get(listOfBest.get(i));
@@ -127,58 +132,68 @@ public class Util {
                     weightOfBest = temp;
                 }
             }
-
+            //addPointState(graph, "PrimsMST: Next Best Vertex", listOfBest.get(indexOfBest));
+            addLineState(graph, "PrimsMST: add Best", listOfBest.get(indexOfBest), indexOfVisited.get(indexOfBest));
             MST.get(indexOfVisited.get(indexOfBest)).set(listOfBest.get(indexOfBest), weightOfBest);
+
             indexOfVisited.add(listOfBest.get(indexOfBest));
         }
 
 
-
+        graph.addstate(new GraphState(new Graph(graph.getVertices(), MST),"Done with Primes MST"));
         return MST;
     }
-
     public static LinkedList<LinkedList<Double>> EulerCirc(Graph graph){
         // Die TSP-Tour ergibt sich direkt aus der DFS-Numerierung.
+        LinkedList<LinkedList<Double>> adj = Undirected(graph.getAdjazenzmatrix());
 
+        LinkedList<Integer> queue = new LinkedList<>(),
+                            visited = new LinkedList<>();
 
-        // Add a start node
-        // path enthält die Knoten, die bereits im Stack waren.
-
-        // todo -> Queue statt stack um eine *TIEFEN* suche zu machen
-        Stack<Integer> stack = new Stack<>();
-        LinkedList<Integer> path = new LinkedList<>();
         int start = (int)(Math.random()*graph.getSize());
-        stack.push(start);
-        path.add(start);
 
-        //TODO mach den shit
-        addPointState(graph, "EulerCirc: Depth First Search", start);
+        queue.add(start);
+        while(!queue.isEmpty()){
+            int curr = queue.remove(); // get the Next element in Queue
+            if (visited.size() > 0){
+                addLineState(graph, "EulerCirc Depth First Search", curr, visited.getLast());
+            }
+            // mark different as seen!
+            addPointState(graph, "EulerCirc Depth First Search", curr);
+            visited.add(curr);  // has in the end the DFS order.
 
 
-        LinkedList<LinkedList<Double>> adj = Util.Undirected(graph.getAdjazenzmatrix());
+            LinkedList<Double> ConnWeights = adj.get(curr);
+            LinkedList<Integer> ConnCityIndex = new LinkedList<>();
 
-        while(!stack.empty()){
-            LinkedList<Double> weights = adj.get(stack.pop());
-            int pathcount = 1;
-
-            // kürzeste distanz?
-            for(int i = weights.size() - 1; i >= 0; i--){
-                if (path.contains(i)) continue;
-
-                double w = weights.get(i);
-                if (w > 0){
-                    stack.push(i);
-                    addPointState(graph, "EulerCirc: Depth First Search", i);
-                    if(!path.contains(i)) {
-                        if(pathcount%2 == 0){
-                            addLineState(graph, "EulerCirc: Depth First Search", i, path.getLast());
+            // create a orderd List of connected Vert
+            for (int i = 0; i < ConnWeights.size(); i++) {
+                double newweight = ConnWeights.get(i);
+                
+                if (newweight != 0 && !visited.contains(i)){
+                    boolean added = false;
+                    for (int j = 0; j < ConnCityIndex.size(); j++) {
+                        if (newweight < ConnWeights.get(ConnCityIndex.get(j))){
+                            ConnCityIndex.add(j, i);
+                            added = true;
+                            break;
                         }
-                        path.add(i);
-                        pathcount++;
+                    }
+                    if (!added){
+                        ConnCityIndex.add(i);
                     }
                 }
             }
+
+            // ConnCityIndex now contains a orderd list of Citys to curr.
+
+            addPointState(graph, "EulerCirc Depth First Search", ConnCityIndex);
+            
+            queue.addAll(0,ConnCityIndex);
+            
+            
         }
+        addLineState(graph, "EulerCirc DepthFirstSearch", visited.getFirst(), visited.getLast());
 
         LinkedList<LinkedList<Double>> EulerCirc = EmtyAdjazenzmatrix(graph.getSize());
 
@@ -187,33 +202,111 @@ public class Util {
         int currIndex, nextIndex;
         City curr, next;
         for(int i = 0; i < graph.getSize()-1; i++){
-            currIndex = path.get(i);
-            nextIndex = path.get(i+1);
+            currIndex = visited.get(i);
+            nextIndex = visited.get(i+1);
 
             curr = cities.get(currIndex);
             next = cities.get(nextIndex);
-
+            // todo ohne berechnung ?
             EulerCirc.get(currIndex).set(nextIndex, Util.EuclidDistance(curr, next));
         }
 
 
-        EulerCirc.get(path.getLast()).set(path.getFirst(), Util.EuclidDistance(cities.get(path.getLast()), cities.get(path.getFirst())));
-
-        graph.addstate(new GraphState(new Graph(graph.getVertices(), EulerCirc) ));
+        EulerCirc.get(visited.getLast()).set(visited.getFirst(), Util.EuclidDistance(cities.get(visited.getLast()), cities.get(visited.getFirst())));
 
         return EulerCirc;
     }
 
-    private static void addLineState(Graph graph, String s, int... indice) {
-        LinkedList<City> cities = new LinkedList<>();
 
-        for (int i : indice) {
-            cities.add(graph.getCity(i));
-        }
-        graph.addstate(new GraphState(cities, s));
+    private static void addLineState(Graph graph, String s, int x, int y) {
+        LinkedList<City> tmp = new LinkedList<>();
+        tmp.add(graph.getCity(x));
+        tmp.add(graph.getCity(y));
+        graph.addstate(new GraphState(tmp, s));
+    }
+    private static void addPointState(Graph graph, String s, LinkedList<Integer> indices) {
+        LinkedList<City> tmp = new LinkedList<>();
+        for (int i : indices) tmp.add(graph.getCity(i));
+        GraphState gs = new GraphState(tmp, s);
+        gs.line = false;
+        graph.addstate(gs);
+
+    }
+    private static void addPointState(Graph g, String process, City city){
+        GraphState tmp = new GraphState(city, process);
+        g.addstate(tmp);
+    }
+    private static void addPointState(Graph g, String process, int city){
+        addPointState(g, process, g.getCity(city));
     }
 
-    public static LinkedList<LinkedList<Double>> RandomPath(Graph graph, Random r){
+    private static LinkedList<LinkedList<Double>> EmtyAdjazenzmatrix(int bound){
+        LinkedList<LinkedList<Double>> result = new LinkedList<>();
+
+        //init with 0
+
+        for (int i = 0; i < bound; i++){
+            LinkedList<Double> tmp = new LinkedList<>();
+            for (int j = 0; j < bound; j++) tmp.add(0.0);
+            result.add(tmp);
+        }
+
+        return result;
+    }
+    private static LinkedList<LinkedList<Double>> Undirected(LinkedList<LinkedList<Double>> adj) {
+        LinkedList<LinkedList<Double>> result = EmtyAdjazenzmatrix(adj.size());
+
+        for (int i = 0; i < adj.size(); i++){
+            for (int j = 0; j < adj.size(); j++){
+                double w = adj.get(i).get(j);
+                if (w>0){
+                    result.get(i).set(j, w);
+                    result.get(j).set(i, w);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static double PathCostOf(Graph g){
+        double result = 0;
+
+        for (LinkedList<Double> x : g.getAdjazenzmatrix()){
+            for (double w : x) result += w;
+        }
+
+        return result;
+    }
+    public static double EuclidDistance(City c1, City c2){
+        //calculate the a and b sides of the Triangle between the cities
+        double A = Math.abs(c1.x - c2.x);
+        double B = Math.abs(c1.y - c2.y);
+
+        // use pythagoras to get the length of the Path between both cities
+        return Math.sqrt((A*A)+(B*B));
+    }
+
+
+    private static void printGraph(LinkedList<LinkedList<Double>> adj){
+        StringBuilder str = new StringBuilder("|\t");
+
+        for(int i=0;i<adj.size();i++){
+            for(int j=0;j<adj.size();j++){
+                str.append(String.format("%.4f\t", adj.get(i).get(j)));
+            }
+
+            System.out.println(str + "|");
+            str = new StringBuilder("|\t");
+        }
+
+        System.out.println("\n");
+    }
+    public static void printGraph(Graph g){
+        LinkedList<LinkedList<Double>> adj = g.getAdjazenzmatrix();
+        printGraph(adj);
+    }
+    private static LinkedList<LinkedList<Double>> RandomPath(Graph graph, Random r){
         LinkedList<LinkedList<Double>> adj = graph.getAdjazenzmatrix();
         if (graph.isDirected) return adj;
 
@@ -235,73 +328,6 @@ public class Util {
 
         return result;
     }
-
-
-    private static void addPointState(Graph g, String process, City city){
-        GraphState tmp = new GraphState(city, process);
-        g.addstate(tmp);
-    }
-
-    private static void addPointState(Graph g, String process, int city){
-        addPointState(g, process, g.getCity(city));
-    }
-
-
-    public static void printGraph(Graph g){
-
-        LinkedList<LinkedList<Double>> adj = g.getAdjazenzmatrix();
-
-        printGraph(adj);
-    }
-
-    public static void printGraph(LinkedList<LinkedList<Double>> adj){
-        String str = "|\t";
-
-        for(int i=0;i<adj.size();i++){
-            for(int j=0;j<adj.size();j++){
-                str += String.format("%.4f\t" ,  adj.get(i).get(j));
-            }
-
-            System.out.println(str + "|");
-            str = "|\t";
-        }
-
-        System.out.println("\n");
-    }
-
-    public static double EuclidDistance(City c1, City c2){
-        //calculate the a and b sides of the Triangle between the cities
-        double A = Math.abs(c1.x - c2.x);
-        double B = Math.abs(c1.y - c2.y);
-
-        // use pythagoras to get the length of the Path between both cities
-        return Math.sqrt((A*A)+(B*B));
-    }
-
-    public static double PathCostOf(Graph g){
-        double result = 0;
-
-        for (LinkedList<Double> x : g.getAdjazenzmatrix()){
-            for (double w : x) result += w;
-        }
-
-        return result;
-    }
-
-    private static LinkedList<LinkedList<Double>> EmtyAdjazenzmatrix(int bound){
-        LinkedList<LinkedList<Double>> result = new LinkedList<>();
-
-        //init with 0
-
-        for (int i = 0; i < bound; i++){
-            LinkedList<Double> tmp = new LinkedList<>();
-            for (int j = 0; j < bound; j++) tmp.add(0.0);
-            result.add(tmp);
-        }
-
-        return result;
-    }
-
     private static LinkedList<LinkedList<Double>> copyGraphAdj(Graph graph) {
         LinkedList<LinkedList<Double>> result = new LinkedList<>();
         LinkedList<LinkedList<Double>> source = graph.getAdjazenzmatrix();
@@ -317,23 +343,6 @@ public class Util {
 
         return result;
     }
-
-    private static LinkedList<LinkedList<Double>> Undirected(LinkedList<LinkedList<Double>> adj) {
-        LinkedList<LinkedList<Double>> result = EmtyAdjazenzmatrix(adj.size());
-
-        for (int i = 0; i < adj.size(); i++){
-            for (int j = 0; j < adj.size(); j++){
-                double w = adj.get(i).get(j);
-                if (w>0){
-                    result.get(i).set(j, w);
-                    result.get(j).set(i, w);
-                }
-            }
-        }
-
-        return result;
-    }
-
     //---- on ICE maybe dont need it...
     /*
     private static Graph joinGraphs(Graph g1, Graph g2) {

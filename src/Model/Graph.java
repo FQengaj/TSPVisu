@@ -14,7 +14,7 @@ import java.util.LinkedList;
 public class Graph {
 
     private LinkedList<GraphState> states = new LinkedList<GraphState>();
-    private int statePointer = 0;
+    public int statePointer = 0;
     private LinkedList<LinkedList<Double>> Adj;
     private LinkedList<City> vertices;
     public boolean isDirected = true;
@@ -113,12 +113,28 @@ public class Graph {
         this.states.add(graphState);
     }
 
+    public GraphState getPrevState(){
+        GraphState currstate = getCurrState();
+        if (statePointer == states.size()) statePointer--;
+        if (currstate != null && statePointer > 0) statePointer--;
+        return currstate;
+    }
+
     public GraphState getNextState() {
-        if (states.size() == 0 || statePointer == states.size()){
+        GraphState currstate = getCurrState();
+        if (currstate != null) statePointer++;
+        return currstate;
+    }
+
+    public GraphState getCurrState() {
+        //System.out.printf("states[%d]\tsize = %d\n", statePointer, states.size());
+        if(isStatesValid()){
             return null;
         }
-        GraphState result = states.get(statePointer);
-        statePointer++;
-        return result;
+        return states.get(statePointer);
+    }
+
+    private boolean isStatesValid(){
+        return (states.size() == 0 || statePointer == states.size() || statePointer < 0);
     }
 }

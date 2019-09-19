@@ -31,7 +31,6 @@ public class LobbyCTRL {
     @FXML private Slider slider;
 
     private Random r = new Random();
-    private int pointCounter = 0;
     private MapPane map;
     private Graph graph;
     private DrawLoop drawloop;
@@ -41,20 +40,28 @@ public class LobbyCTRL {
     public void initialize(){
         graph = new Graph();
         this.map = new MapPane(this.graph);
-        drawloop = new DrawLoop(this.map);
+        //drawloop = new DrawLoop(this.map);
+        //new Thread(drawloop).start();
+
         Pane p = new Pane();
         p.getChildren().add(map);
 
+        initListeners(p);
+
+        BaseLayout.setCenter(p);
+    }
+    private void initListeners(Pane p) {
         ChangeListener<Number> onResizeWidth = (observable, oldValue, newValue)-> {
             map.setWidth(newValue.doubleValue());
-            map.onDraw();
+            RedrawMap();
             updateTotalCost();
         };
         ChangeListener<Number> onResizeHeight = (observable, oldValue, newValue)-> {
             map.setHeight(newValue.doubleValue());
-            map.onDraw();
+            RedrawMap();
             updateTotalCost();
         };
+
         map.setOnMouseClicked(e -> {
             double x = e.getX();
             double y = e.getY();
@@ -68,14 +75,14 @@ public class LobbyCTRL {
 
             addPoint(x,y);
 
-            map.onDraw();
+            map.lagacyOnDraw();
             updateTotalCost();
             lbl.setText(graph.getSize()+"");
         });
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
             map.lineWith = newValue.doubleValue();
             lbllw.setText(String.format("Line Width: %.2f", map.lineWith));
-            map.onDraw();
+            map.lagacyOnDraw();
             updateTotalCost();
         });
         txt.setOnKeyPressed(e->{
@@ -88,85 +95,28 @@ public class LobbyCTRL {
         p.widthProperty().addListener(onResizeWidth);
 
         topPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-
-        BaseLayout.setCenter(p);
     }
 
-    @FXML
-    void addRandomPoint(ActionEvent event) {
+
+    @FXML void addRandomPoint(ActionEvent event) {
         addRandomPoint();
 
-        map.onDraw();
+        map.lagacyOnDraw();
         updateTotalCost();
         lbl.setText(graph.getSize()+"");
     }
-
     private void addRandomPoint() {
         double x = r.nextDouble();
         double y = r.nextDouble();
-
+        //System.out.printf("%d: [%.4f/%.4f]\n", (graph.getSize()+1),x,y);
         addPoint(x,y);
-    }
 
+    }
     private void addPoint(double x, double y){
         graph.addVertex(new City(x,y));
+        //graph.addstate(new GraphState(graph));
     }
-
-
-    @FXML
-    void clearList() {
-        graph.clear();
-        lbl.setText("0");
-        map.onDraw();
-        updateTotalCost();
-        lblProcess.setText("Cleared:");
-    }
-
-    @FXML
-    void toogleLines(){
-        map.toogleLines();
-        if (map.drawLines){
-            btnhl.setText("Hide Lines");
-        }else{
-            btnhl.setText("Show Lines");
-        }
-        map.onDraw();
-        updateTotalCost();
-    }
-
-    @FXML
-    private void primsMST(){
-        this.graph.setAdjazenzmatrix(Util.PrimsMST(graph));
-        this.graph.isDirected = false;
-        map.onDraw();
-        updateTotalCost();
-        Util.printGraph(graph);
-    }
-
-    @FXML
-    private void perfectMatch(){
-        this.graph.setAdjazenzmatrix(Util.perfectMatch(graph));
-        this.graph.isDirected = false;
-        map.onDraw();
-        updateTotalCost();
-        Util.printGraph(graph);
-    }
-
-    @FXML
-    private void eulerCirc(){
-        if(!graph.isDirected){
-            this.graph.setAdjazenzmatrix(Util.EulerCirc(graph));
-
-
-            //map.onDraw();
-            updateTotalCost();
-            Util.printGraph(graph);
-        }
-
-    }
-
-    @FXML
-    private void addPoints() {
+    @FXML private void addPoints() {
         int pointstoadd;
         try{
             pointstoadd = Integer.parseInt(txt.getText());
@@ -182,39 +132,125 @@ public class LobbyCTRL {
             addRandomPoint();
         }
 
-        map.onDraw();
+        map.lagacyOnDraw();
         updateTotalCost();
         lbl.setText(graph.getSize()+"");
     }
 
-    @FXML
-    private void randomPath(){
-        graph.setAdjazenzmatrix(Util.RandomPath(graph, r));
-        map.onDraw();
+    @FXML void clearList() {
+        graph.clear();
+        lbl.setText("0");
+        //map.lagacyOnDraw();
+        RedrawMap();
+        updateTotalCost();
+        lblProcess.setText("Cleared:");
+    }
+    @FXML void toogleLines(){
+        map.toogleLines();
+        if (map.drawLines){
+            btnhl.setText("Hide Lines");
+        }else{
+            btnhl.setText("Show Lines");
+        }
+        //map.lagacyOnDraw();
+        RedrawMap();
         updateTotalCost();
     }
-
     private void updateTotalCost() {
         double TotalCost = Util.PathCostOf(this.graph);
         String TC = String.format("%.4f", TotalCost);
         this.lblTC.setText(TC);
     }
 
-    public void aniStep(ActionEvent actionEvent) {
+    @FXML private void primsMST(){
+        addSnapshot("Starting: Prims Minimum Spanning Tree");
+        this.graph.setAdjazenzmatrix(Util.PrimsMST(graph));
+        this.graph.isDirected = false;
+        updateTotalCost();
+        //map.lagacyOnDraw();
+        //Util.printGraph(graph);
+    }
+    @FXML private void perfectMatch(){
+        addSnapshot("Perfect Matching");
+        this.graph.setAdjazenzmatrix(Util.perfectMatch(graph));
+        this.graph.isDirected = false;
+        updateTotalCost();
+        //map.lagacyOnDraw();
+        //Util.printGraph(graph);
+    }
+    @FXML private void eulerCirc(){
+        if(!graph.isDirected){
+            addSnapshot("Starting EulerCirc");
+            this.graph.setAdjazenzmatrix(Util.EulerCirc(graph));
+            updateTotalCost();
+            addSnapshot("finished EulerCirc :) ");
+
+            //map.onDraw();
+            //Util.printGraph(graph);
+            //drawloop.start();
+        }
+
+    }
+    @FXML public void TreeTSP(){
+        primsMST();
+        eulerCirc();
+    }
+
+    @FXML public void aniSkip(){
         GraphState currstate = this.graph.getNextState();
-        if (currstate != null){
-            this.lblProcess.setText(currstate.process+":");
-            if(currstate.transition){
-                this.map.onDraw(currstate.snapshot);
-            }else if (currstate.line){
-                LinkedList<City> sel = currstate.selection;
+        if (currstate == null) return;
+        while(!currstate.transition) {
+            currstate = this.graph.getNextState();
+        }
+
+        this.map.onDraw(currstate.snapshot);
+        this.lblProcess.setText(currstate.process);
+    }
+    @FXML public void aniStep() {
+        DrawStep(graph.getNextState());
+    }
+    @FXML public void aniprev() {
+        graph.statePointer--;
+        RedrawMap();
+    }
+    @FXML public void anirewind() {
+        GraphState currstate = graph.getPrevState();
+        if (currstate == null) return;
+        while(!currstate.transition) {
+            currstate = graph.getPrevState();
+        }
+
+        this.map.onDraw(currstate.snapshot);
+        this.lblProcess.setText(currstate.process);
+    }
+
+    private void addSnapshot(String process){
+        this.graph.addstate(new GraphState(new Graph(graph.getVertices(), graph.getAdjazenzmatrix()), process));
+    }
+    private void DrawStep(GraphState curState){
+        if (curState != null){
+            if(curState.transition){
+                this.map.onDraw(curState.snapshot);
+            }else if (curState.line){
+                LinkedList<City> sel = curState.selection;
                 for (int i = 0; i < sel.size()-1; i++) {
                     this.map.highlightLine(sel.get(i), sel.get(i+1));
                 }
             }else{
-                this.map.highlightPoint(currstate.selection);
+                this.map.highlightPoint(curState.selection);
             }
-
+            this.lblProcess.setText(curState.process+":");
         }
+    }
+    private void RedrawMap(){
+        int currstatePointer = graph.statePointer;
+        GraphState currstate = graph.getCurrState();
+        if(currstate == null) {map.onDraw(this.graph); return;}
+        while(!currstate.transition) currstate = graph.getPrevState();
+        while(graph.statePointer != currstatePointer){
+            DrawStep(currstate);
+            currstate = graph.getNextState();
+        }
+        this.lblProcess.setText(currstate.process);
     }
 }

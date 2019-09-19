@@ -25,8 +25,9 @@ public class GraphState {
         this.process = process;
     }
 
-    public GraphState(Graph g){
+    public GraphState(Graph g, String process){
         this.transition = true;
         this.snapshot = g;
+        this.process = process;
     }
 }

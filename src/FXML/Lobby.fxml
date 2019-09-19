@@ -65,7 +65,7 @@
                         </Label>
                         <ButtonBar buttonMinWidth="35.0">
                            <buttons>
-                              <Button fx:id="btnffd" mnemonicParsing="false" onAction="#aniStep" text="⏭">
+                              <Button fx:id="btnffd" mnemonicParsing="false" onAction="#aniSkip" text="⏭">
                                  <font>
                                     <Font size="17.0" />
                                  </font>
@@ -80,12 +80,12 @@
                                     <Font size="17.0" />
                                  </font>
                               </Button>
-                              <Button fx:id="btnprev" mnemonicParsing="false" onAction="#aniStep" text="⏪">
+                              <Button fx:id="btnprev" mnemonicParsing="false" onAction="#aniprev" text="⏪">
                                  <font>
                                     <Font size="17.0" />
                                  </font>
                               </Button>
-                              <Button fx:id="btnrvwnd" mnemonicParsing="false" onAction="#aniStep" text="⏮">
+                              <Button fx:id="btnrvwnd" mnemonicParsing="false" onAction="#anirewind" text="⏮">
                                  <font>
                                     <Font size="17.0" />
                                  </font>
@@ -95,6 +95,7 @@
                      </children>
                   </VBox>
                   <Button fx:id="btnar" mnemonicParsing="false" onAction="#addRandomPoint" text="Random Point" />
+                  <Button fx:id="btnttsp" mnemonicParsing="false" onAction="#TreeTSP" text="Tree TSP" />
                   <Button fx:id="btnCls" mnemonicParsing="false" onAction="#clearList" text="Clear" />
                   <Button fx:id="btnhl" mnemonicParsing="false" onAction="#toogleLines" text="Hide Lines" />
                   <Button fx:id="btnPMST" mnemonicParsing="false" onAction="#primsMST" text="Prims MST" />
